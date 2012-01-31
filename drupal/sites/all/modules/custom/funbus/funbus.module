@@ -1,0 +1,96 @@
+<?php
+
+/**
+ * @file funbus.module
+ *
+ * Custom functionality for the Funbus Comedy Drupal Empire.
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+function funbus_menu() {
+  $items = array();
+  $items['funbus/funbus-video-modal/%file'] = array(
+    'access callback' => TRUE,
+    'page arguments' => array(2),
+    'page callback' => 'funbus_video_modal',
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Colorbox callback to display the YouTube video player in a modal.
+ */
+function funbus_video_modal($file) {
+  $video = entity_view('file', array($file), 'default');
+  print render($video);
+  exit;
+}
+
+/**
+ * Implementation of hook_formatter_info().
+ */
+function funbus_file_formatter_info() {
+  $formatters = array();
+  $formatters['funbus_video_modal'] = array(
+    'label' => t('Funbus Modal Video Player'),
+    'field_types' => array('video'),
+    'settings callback' => 'funbus_file_formatter_funbus_video_modal_settings',
+    'view callback' => 'funbus_file_formatter_funbus_video_modal_view',
+  );
+  return $formatters;
+}
+
+/**
+ * Settings form for Funbus video modal settings.
+ */
+function funbus_file_formatter_funbus_video_modal_settings(&$form, &$form_state, $settings) {
+  $element = array();
+  $element['image_style'] = array(
+    '#title' => t('Image style'),
+    '#type' => 'select',
+    '#options' => image_style_options(FALSE),
+    '#default_value' => $settings['image_style'],
+    '#empty_option' => t('None (original image)'),
+  );
+  $element['modal_width'] = array(
+    '#title' => t('Modal width'),
+    '#type' => 'textfield',
+    '#default_value' => $settings['modal_width'],
+  );
+  $element['modal_height'] = array(
+    '#title' => t('Modal height'),
+    '#type' => 'textfield',
+    '#default_value' => $settings['modal_height'],
+  );
+  return $element;
+}
+
+/**
+ * Funbus video modal formatter callback.
+ */
+function funbus_file_formatter_funbus_video_modal_view(&$file, $display, $langcode) {
+  $scheme = file_uri_scheme($file->uri);
+  // WYSIWYG does not yet support video inside a running editor instance.
+  if ($scheme == 'youtube' && empty($file->override['wysiwyg'])) {
+    $thumbnail = media_youtube_file_formatter_image_view($file, $display, $langcode);
+    $element = array(
+      '#type' => 'link',
+      '#title' => render($thumbnail),
+      '#href' => 'funbus/funbus-video-modal/'. $file->fid,
+      '#options' => array(
+        'attributes' => array(
+          'class' => array('colorbox-load'),
+        ),
+        'html' => TRUE,
+        'query' => array(
+          'width' => $display['settings']['modal_width'],
+          'height' => $display['settings']['modal_height'],
+        ),
+      )
+    );
+    return $element;
+  }
+}

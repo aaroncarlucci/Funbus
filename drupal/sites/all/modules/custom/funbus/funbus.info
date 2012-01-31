@@ -1,0 +1,4 @@
+name = Funbus
+description = "Custom functionality for the Funbus Comedy Drupal Empire."
+package = Funbus
+core = 7.x
