@@ -22,6 +22,7 @@ function funbus_menu() {
 
 /**
  * Colorbox callback to display the YouTube video player in a modal.
+ * TODO: rename to generic file modal.
  */
 function funbus_video_modal($file) {
   $video = entity_view('file', array($file), 'default');
@@ -34,6 +35,12 @@ function funbus_video_modal($file) {
  */
 function funbus_file_formatter_info() {
   $formatters = array();
+  $formatters['funbus_image_modal'] = array(
+    'label' => t('Funbus Modal Image'),
+    'field_types' => array('image'),
+    'settings callback' => 'funbus_file_formatter_funbus_image_modal_settings',
+    'view callback' => 'funbus_file_formatter_funbus_image_modal_view',
+  );
   $formatters['funbus_video_modal'] = array(
     'label' => t('Funbus Modal Video Player'),
     'field_types' => array('video'),
@@ -41,6 +48,31 @@ function funbus_file_formatter_info() {
     'view callback' => 'funbus_file_formatter_funbus_video_modal_view',
   );
   return $formatters;
+}
+
+/**
+ * Settings form for Funbus image modal settings.
+ */
+function funbus_file_formatter_funbus_image_modal_settings(&$form, &$form_state, $settings) {
+  $element = array();
+  $element['image_style'] = array(
+    '#title' => t('Image style'),
+    '#type' => 'select',
+    '#options' => image_style_options(FALSE),
+    '#default_value' => $settings['image_style'],
+    '#empty_option' => t('None (original image)'),
+  );
+  $element['modal_width'] = array(
+    '#title' => t('Modal width'),
+    '#type' => 'textfield',
+    '#default_value' => $settings['modal_width'],
+  );
+  $element['modal_height'] = array(
+    '#title' => t('Modal height'),
+    '#type' => 'textfield',
+    '#default_value' => $settings['modal_height'],
+  );
+  return $element;
 }
 
 /**
@@ -64,6 +96,28 @@ function funbus_file_formatter_funbus_video_modal_settings(&$form, &$form_state,
     '#title' => t('Modal height'),
     '#type' => 'textfield',
     '#default_value' => $settings['modal_height'],
+  );
+  return $element;
+}
+
+/**
+ * Funbus image modal formatter callback.
+ */
+function funbus_file_formatter_funbus_image_modal_view(&$file, $display, $langcode) {
+  $element = array(
+    '#type' => 'link',
+    '#title' => theme('image', array('path' => image_style_url($display['settings']['image_style'], $file->uri))),
+    '#href' => 'funbus/funbus-video-modal/'. $file->fid,
+    '#options' => array(
+      'attributes' => array(
+        'class' => array('colorbox-load'),
+      ),
+      'html' => TRUE,
+      'query' => array(
+        'width' => $display['settings']['modal_width'],
+        'height' => $display['settings']['modal_height'],
+      ),
+    )
   );
   return $element;
 }
