@@ -6,3 +6,9 @@ engine = phptemplate
 base theme = bluemasters
 
 stylesheets[all][] = funbuscomedy.css
+
+regions[content] = Content
+regions[home_area_1] = Home area 1
+regions[home_area_2] = Home area 2
+regions[home_area_3] = Home area 3
+regions[home_area_3_b] = Home area 3 b

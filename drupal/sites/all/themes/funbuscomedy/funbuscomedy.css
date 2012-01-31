@@ -3,3 +3,12 @@
  *
  * Funbus Comedy stylesheet customizations.
  */
+
+/* Videos page. */
+#videos .pane-videos-panel-pane-1 .views-field {
+  text-align: center;
+}
+
+#videos .pane-videos-panel-pane-1 .views-field iframe.youtube-player {
+  align: center;
+}
