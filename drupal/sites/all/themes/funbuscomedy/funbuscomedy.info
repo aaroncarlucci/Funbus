@@ -1,0 +1,8 @@
+name = Funbus Comedy
+description = Funbus Comedy website look and feel based on Bluemasters.
+version = VERSION
+core = 7.x
+engine = phptemplate
+base theme = bluemasters
+
+stylesheets[all][] = funbuscomedy.css
