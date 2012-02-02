@@ -4,11 +4,36 @@
  * Funbus Comedy stylesheet customizations.
  */
 
-/* Videos page. */
-#videos .pane-videos-panel-pane-1 .views-field {
+/* Global */
+ul.pager {
+  background: none;
+  border: none;
+}
+
+/* Home page. */
+#home-blocks-area .region .block h2 {
+  background: none;
+}
+
+/* Videos and Stand Up pages. */
+.pane-videos-panel-pane-1 .views-field {
   text-align: center;
 }
 
-#videos .pane-videos-panel-pane-1 .views-field iframe.youtube-player {
+.pane-videos-panel-pane-1 .views-field iframe.youtube-player {
   align: center;
+}
+
+/* User page */
+.field-name-field-user-bio .field-items {
+  width: 580px;
+}
+
+.field-name-field-user-bio .field-items .field-item {
+  padding-right: 10px;
+}
+
+.field-name-field-user-image {
+  width: 290px;
+  float: right;
 }
