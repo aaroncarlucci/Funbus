@@ -15,13 +15,37 @@ ul.pager {
   background: none;
 }
 
+#twitter_block_results .twitter_block_user img {
+  margin: 0 10px 10px 0;
+}
+
 /* Videos and Stand Up pages. */
+.pane-videos-panel-pane-1 .views-row {
+  margin-bottom: 20px;
+}
+
 .pane-videos-panel-pane-1 .views-field {
   text-align: center;
+  margin: 10px 10px 10px 10px;
 }
 
 .pane-videos-panel-pane-1 .views-field iframe.youtube-player {
   align: center;
+}
+
+/* Characters page */
+#characters .pane-characters-panel-pane-1 table.views-view-grid {
+  border: none;
+  margin: 0 0 0 0;
+}
+
+#characters .pane-characters-panel-pane-1 table.views-view-grid td {
+  border: none;
+  padding: 0 0 0 0;
+}
+
+#characters .pane-characters-panel-pane-1 .views-field-field-user-name {
+  text-align: center;
 }
 
 /* User page */
@@ -36,4 +60,15 @@ ul.pager {
 .field-name-field-user-image {
   width: 290px;
   float: right;
+}
+
+/* Blog page */
+#blogs .views-field-field-blog-image {
+  width: 290px;
+  float: left;
+  margin-right: 10px;
+}
+
+#blogs .views-field-title {
+
 }

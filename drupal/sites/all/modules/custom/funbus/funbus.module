@@ -148,3 +148,13 @@ function funbus_file_formatter_funbus_video_modal_view(&$file, $display, $langco
     return $element;
   }
 }
+
+/**
+ * Implements hook_views_api().
+ */
+function funbus_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'funbus'),
+  );
+}

@@ -70,8 +70,8 @@
             <div class="window">
                 <div class="image_reel">
                     <a href="<?php print url('node/3'); ?>"><img src="<?php print base_path() . drupal_get_path('theme', 'funbuscomedy') . '/images/homepage-slides/homepage-slide-1.jpg'; ?>"></a>
-                    <a href="<?php print url('node/2'); ?>"><img src="<?php print base_path() . drupal_get_path('theme', 'funbuscomedy') . '/images/homepage-slides/homepage-slide-2.jpg'; ?>"></a>
-                    <a href="<?php print url('node/1'); ?>"><img src="<?php print base_path() . drupal_get_path('theme', 'funbuscomedy') . '/images/homepage-slides/homepage-slide-3.jpg'; ?>"></a>
+                    <a href="<?php print url('node/2'); ?>"><img src="<?php print base_path() . drupal_get_path('theme', 'funbuscomedy') . '/images/homepage-slides/homepage-slide-3.jpg'; ?>"></a>
+                    <a href="<?php print url('node/1'); ?>"><img src="<?php print base_path() . drupal_get_path('theme', 'funbuscomedy') . '/images/homepage-slides/homepage-slide-2.jpg'; ?>"></a>
                     <a href="<?php print url('node/1'); ?>"><img src="<?php print base_path() . drupal_get_path('theme', 'funbuscomedy') . '/images/homepage-slides/homepage-slide-4.jpg'; ?>"></a>
                 </div>
                 <!--
