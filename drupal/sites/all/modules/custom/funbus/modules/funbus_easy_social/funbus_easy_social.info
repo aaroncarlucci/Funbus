@@ -1,0 +1,8 @@
+name = Funbus Easy Social
+description = "Custom functionality for the Funbus Comedy Drupal Empire."
+package = Funbus
+core = 7.x
+
+files[] = funbus_easy_social.module
+files[] = funbus_easy_social.views.inc
+files[] = funbus_easy_social_handler_field_video.inc

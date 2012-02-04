@@ -1,0 +1,17 @@
+<?php
+
+/**
+ * @file funbus_easy_social.module
+ *
+ * Views handler for Easy Social links on Funbus Videos.
+ */
+
+/**
+ * Implements hook_views_api().
+ */
+function funbus_easy_social_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'funbus_easy_social'),
+  );
+}

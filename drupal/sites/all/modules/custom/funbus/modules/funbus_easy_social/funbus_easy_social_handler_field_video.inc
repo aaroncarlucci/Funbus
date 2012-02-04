@@ -1,6 +1,6 @@
 <?php
 
-class funbus_service_links_handler_field_service_links_youtube extends views_handler_field {
+class funbus_easy_social_handler_field_video extends views_handler_field {
   function construct() {
     parent::construct();
     $this->additional_fields['uri'] = 'uri';
@@ -13,7 +13,6 @@ class funbus_service_links_handler_field_service_links_youtube extends views_han
 
   function option_definition() {
     $options = parent::option_definition();
-
     return $options;
   }
 
@@ -26,8 +25,13 @@ class funbus_service_links_handler_field_service_links_youtube extends views_han
 
   function render($values) {
     $uri = $values->{$this->aliases['uri']};
-    dsm($uri);
-    dsm($values);
+
+    if (isset($values->node_title)) {
+      $enabled_widgets = variable_get_value("easy_social_video_widgets");
+      $widgets = _easy_social_render_widgets(file_create_url($uri), $values->node_title);
+      return theme('easy_social_links', array('widgets' => $widgets, 'widget_type' => $type));
+    }
+
   }
 
 }
