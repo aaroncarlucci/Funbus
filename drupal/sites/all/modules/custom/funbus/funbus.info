@@ -4,5 +4,3 @@ package = Funbus
 core = 7.x
 
 files[] = funbus.module
-files[] = funbus.views.inc
-files[] = funbus_service_links_handler_field_service_links_youtube.inc
