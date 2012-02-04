@@ -32,6 +32,14 @@ ul.pager {
   margin: 0 10px 10px 0;
 }
 
+#home-blocks-area .easy_social_box {
+  margin-top: 10px;
+}
+
+#home-blocks-area .easy_social-widget-twitter {
+  margin: 0 40px 0 40px;
+}
+
 /* Videos and Stand Up pages. */
 .pane-videos-panel-pane-1 .views-row {
   margin-bottom: 20px;

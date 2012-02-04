@@ -627,7 +627,7 @@ function _easy_social_render_widgets($url, $title, $type = NULL, $enabled_widget
     $ordered_widgets = array();
 
     foreach ($order as $key) {
-      if (in_array($key, $enabled_widgets)) {
+      if (in_array($key, $enabled_widgets) && !empty($enabled_widgets[$key])) {
         $ordered_widgets[] = $key;
       }
     }
