@@ -10,18 +10,23 @@
 
         <!--header-top-inside-left-feed-->
         <div id="header-top-inside-left-feed">
-            <div id="topSocial">
-            <ul>
-                <li><a class="twitter" href="http://twitter.com/morethanthemes" title="Follow Us on Twitter!"></a></li>
-                <li><a class="facebook" href="http://www.facebook.com/pages/More-than-just-themes/194842423863081" title="Join Us on Facebook!"></a></li>
-                <li><a class="rss" title="RSS" href="#" title="Subcribe to Our RSS Feed"></a></li>
-            </ul>
-            </div>
+
         </div>
         <!--EOF:header-top-inside-left-feed-->
 
         <!--header-top-inside-left-right-->
-        <div id="header-top-inside-right"><?php print render($page['search_area']);?></div>
+        <div id="header-top-inside-right">
+
+            <?php print render($page['search_area']);?>
+            <div id="topSocial">
+            <ul>
+                <li><a class="twitter" href="http://twitter.com/funbuscomedy" title="Follow Us on Twitter!"></a></li>
+                <li><a class="facebook" href="http://www.facebook.com/funbuscomedy" title="Join Us on Facebook!"></a></li>
+                <li><a class="google-plus" href="http://plus.google.com/funbuscomedy" title="Follow Us on Google Plus!"></a></li>
+                <!--<li><a class="rss" title="RSS" href="#" title="Subcribe to Our RSS Feed"></a></li>-->
+            </ul>
+            </div>
+        </div>
         <!--EOF:header-top-inside-left-right-->
 
     </div>
@@ -69,10 +74,10 @@
         <div class="main_view">
             <div class="window">
                 <div class="image_reel">
-                    <a href="<?php print url('node/3'); ?>"><img src="<?php print base_path() . drupal_get_path('theme', 'funbuscomedy') . '/images/homepage-slides/homepage-slide-1.jpg'; ?>"></a>
-                    <a href="<?php print url('node/2'); ?>"><img src="<?php print base_path() . drupal_get_path('theme', 'funbuscomedy') . '/images/homepage-slides/homepage-slide-3.jpg'; ?>"></a>
-                    <a href="<?php print url('node/1'); ?>"><img src="<?php print base_path() . drupal_get_path('theme', 'funbuscomedy') . '/images/homepage-slides/homepage-slide-2.jpg'; ?>"></a>
-                    <a href="<?php print url('node/1'); ?>"><img src="<?php print base_path() . drupal_get_path('theme', 'funbuscomedy') . '/images/homepage-slides/homepage-slide-4.jpg'; ?>"></a>
+                    <img src="<?php print base_path() . drupal_get_path('theme', 'funbuscomedy') . '/images/homepage-slides/homepage-slide-1.jpg'; ?>">
+                    <img src="<?php print base_path() . drupal_get_path('theme', 'funbuscomedy') . '/images/homepage-slides/homepage-slide-3.jpg'; ?>">
+                    <img src="<?php print base_path() . drupal_get_path('theme', 'funbuscomedy') . '/images/homepage-slides/homepage-slide-2.jpg'; ?>">
+                    <img src="<?php print base_path() . drupal_get_path('theme', 'funbuscomedy') . '/images/homepage-slides/homepage-slide-4.jpg'; ?>">
                 </div>
                 <!--
                 <div class="descriptions">
@@ -95,7 +100,7 @@
 
     <div id="home-blocks-area" class="clearfix">
 
-		<?php if ($messages): ?>
+	<?php if ($messages): ?>
         <div id="console" class="clearfix">
         <?php print $messages; ?>
         </div>
@@ -149,11 +154,9 @@
     	<div id="footer-bottom-inside-right">
 		<?php print theme('links__system_secondary_menu', array('links' => $secondary_menu, 'attributes' => array('id' => 'secondary-menu', 'class' => array('links', 'inline', 'clearfix')))); ?>
     	</div>
-    	<div class="credits-container" style="clear:both; padding-top:12px;">Ported to Drupal for the Open Source Community by <a href="http://www.drupalizing.com">Drupalizing</a>, a Project of <a href="http://www.morethanthemes.com">More than Themes</a></div>
     </div>
     <div class="credits-container clearfix">
-        <a title="Brought To You By: www.SmashingMagazine.com" class="smashing" href="http://www.smashingmagazine.com" target="_blank">Brought to you By: www.SmashingMagazine.com</a>
-        <a title="Drupalizing" class="drupalizing" href="http://www.drupalizing.com" target="_blank">Drupalizing</a>
+	    <p>&copy; Funbus Comedy 2012</p>
     </div>
 </div>
 <!--EOF:footer-bottom-->

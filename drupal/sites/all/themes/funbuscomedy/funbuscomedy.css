@@ -5,6 +5,19 @@
  */
 
 /* Global */
+#header-top-inside-right {
+  width: 63px;
+}
+
+#topSocial ul li a {
+  padding-right: 0;
+  margin-right: 5px
+}
+
+#topSocial ul li a.google-plus {
+  background: url(images/google-plus.png);
+}
+
 ul.pager {
   background: none;
   border: none;
