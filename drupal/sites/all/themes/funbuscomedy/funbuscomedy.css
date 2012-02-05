@@ -18,9 +18,17 @@
   background: url(images/google-plus.png);
 }
 
+#footer {
+  min-height: 0px;
+}
+
 ul.pager {
   background: none;
   border: none;
+}
+
+#cboxLoadedContent .file-video-youtube {
+  margin-left: 5px;
 }
 
 /* Home page. */
