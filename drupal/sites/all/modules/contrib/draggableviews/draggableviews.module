@@ -1,0 +1,253 @@
+<?php
+
+
+/**
+ * Implements hook_views_api().
+ */
+function draggableviews_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'draggableviews') . '/views',
+  );
+}
+
+/**
+ * Implements hook_views_form_submit().
+ *
+ * Save weight records after form submit.
+ */
+function draggableviews_views_form_submit($form, &$form_state) {
+  $fv = $form_state['values'];
+
+  // Ensure view object exists.
+  if (!isset($fv['view'])) {
+    return;
+  }
+  $view = $fv['view'];
+  $view_name = $view->name;
+  $view_display = $view->current_display;
+  // View arguments.
+  $arguments = $view->args;
+  if (isset($view->exposed_input)) {
+    $arguments += $view->exposed_input;
+    ksort($arguments);
+    // Redirect view to the same page with exposed filters set.
+    $form_state['redirect'] = array(current_path(), array('query' => $view->exposed_input));
+  }
+  $args_string = json_encode($arguments);
+
+  // Save records to our custom table.
+  foreach ($fv['draggableviews'] as $item) {
+    // Delete previous order record.
+    db_delete('draggableviews_structure')
+      ->condition('view_name', $view_name)
+      ->condition('view_display', $view_display)
+      ->condition('args', $args_string)
+      ->condition('entity_id', $item['id'])
+      ->execute();
+
+    // Create new order record.
+    $record = array(
+      'view_name' => $view_name,
+      'view_display' => $view_display,
+      'args' => $args_string,
+      'entity_id' => $item['id'],
+      'weight' => $item['weight'],
+    );
+    drupal_write_record('draggableviews_structure', $record);
+  }
+
+  // Trigger the event "A view has been sorted"
+  if (module_exists('rules')) {
+    rules_invoke_event('draggableviews_rules_event_sorted', $view->name);
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Alter views form to change button label.
+ */
+function draggableviews_form_alter(&$form, &$form_state, $form_id) {
+  if (isset($form['draggableviews']) && !empty($form['draggableviews'])) {
+    // Check permissions.
+    if (!user_access('access draggableviews')) {
+      $form['actions']['submit']['#access'] = FALSE;
+      return;
+    }
+    $options = $form['view']['#value']->field['draggableviews']->options['draggableviews'];
+    $form['actions']['submit']['#value'] = t($options['save_button_label']);
+
+    if ($options['ajax']){
+      $form['actions']['submit']['#ajax'] = array(
+        'callback' => 'draggableviews_view_draggabletable_form_ajax'
+      );
+    }
+  }
+}
+
+/**
+ * Implementes hook_preprocess_views_view_table().
+ */
+function draggableviews_preprocess_views_view_table(&$vars) {
+  // Check whether this table view has draggableview field.
+  if (!isset($vars['view']->field['draggableviews'])) {
+    return;
+  }
+
+  // Check permissions.
+  if (!user_access('access draggableviews')) {
+    return;
+  }
+
+  // Add table class.
+  $vars['classes_array'][] = 'draggable';
+
+  // Add row class.
+  foreach ($vars['row_classes'] as &$row_classes) {
+    $row_classes[] = 'draggable';
+  }
+
+  // TODO: Change to better unique id.
+  $vars['attributes_array']['id'] = 'draggableviews-table' . rand(0, 1000);
+  // Add javascript.
+  drupal_add_tabledrag($vars['attributes_array']['id'], 'order', 'sibling', 'draggableviews-weight');
+}
+
+/**
+ * Implementes hook_preprocess_views_view_list().
+ */
+function draggableviews_preprocess_views_view_list(&$vars) {
+  // Check whether this table view has draggableview field.
+  if (!isset($vars['view']->field['draggableviews'])) {
+    return;
+  }
+
+  // Check permissions.
+  if (!user_access('access draggableviews')) {
+    return;
+  }
+
+  // Add class to ul item of the view.
+  $class = 'draggableviews-grid-' . rand(0, 1000);
+  $vars['list_type_prefix'] = str_replace('>', ' class="' . $class . '">', $vars['list_type_prefix']);
+  // Add javascript.
+  drupal_add_library('system', 'ui.sortable');
+  // Add setting of the row class.
+  $js_setting = array('draggableviews_row_class' => $class);
+  // Add setting whether ajax enabled or not.
+  $js_setting['draggableviews_ajax'] = $vars['view']->field['draggableviews']->options['draggableviews']['ajax'];
+  drupal_add_js($js_setting, 'setting');
+  // Add custom js and css.
+  drupal_add_js(drupal_get_path('module', 'draggableviews') . '/js/draggableviews_list.js');
+  drupal_add_css(drupal_get_path('module', 'draggableviews') . '/css/draggableviews_list.css');
+}
+
+/**
+ * Implements hook_permission().
+ */
+function draggableviews_permission() {
+  return array(
+    'access draggableviews' => array(
+      'title' => t('Access draggable views'),
+      'description' => t('Give users the right to sort their views'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_contextual_links_view_alter().
+ *
+ * Adds "Order view" contextual link.
+ */
+function draggableviews_contextual_links_view_alter(&$element, $items) {
+  // Check permission to use draggable.
+  if (!user_access('access draggableviews')) {
+    return;
+  }
+  // Remove contextual links from being rendered, when so desired, such as
+  // within a View preview.
+  if (views_ui_contextual_links_suppress()) {
+    $element['#links'] = array();
+  }
+  // Append the display ID to the Views UI edit links, so that clicking on the
+  // contextual link takes you directly to the correct display tab on the edit
+  // screen.
+  elseif (!empty($element['#links']['views-ui-edit']) && !empty($element['#element']['#views_contextual_links_info']['views_ui']['view_display_id'])) {
+    $display_id = $element['#element']['#views_contextual_links_info']['views_ui']['view_display_id'];
+    $view_name = $element['#element']['#views_contextual_links_info']['views_ui']['view_name'];
+    $view = views_get_view($view_name);
+    $view->build($display_id);
+
+    // Proceed only if there is draggableviews weight sort criteria available.
+    if (!$sort_key = draggable_views_get_draggable_sort($view)) {
+      return;
+    }
+
+    // Proceed only if order view is no self.
+    $order_view_display = $view->sort['weight']->options['draggableviews_setting_view'];
+    if ($order_view_display == 'self') {
+      return;
+    }
+    list($order_view_name, $order_view_display_id) = explode(':', $order_view_display);
+    // Load order view and check its path.
+    $order_view = views_get_view($order_view_name);
+    if (isset($order_view->display[$order_view_display_id]->display_options['path'])) {
+      $path = $order_view->display[$order_view_display_id]->display_options['path'];
+      $element['#links']['draggableviews-order'] = array(
+        'title' => t('Order view'),
+        'href' => $path,
+        'query' => array('destination' => current_path()),
+      );
+    }
+  }
+}
+
+/**
+ * Ajax draggabletable submit handler.
+ */
+function draggableviews_view_draggabletable_form_ajax($form, $form_state){
+  // Find the form element
+  $form_element = "form:has(input[name=form_build_id][value='{$form['form_build_id']['#value']}'])";
+
+  // Remove warning and asterisk.
+  return array('#type' => 'ajax', '#commands' => array(
+    ajax_command_remove("$form_element div.tabledrag-changed-warning"),
+    ajax_command_remove("$form_element span.tabledrag-changed"),
+    ajax_command_remove("$form_element div.draggableviews-changed-warning"),
+  ));
+}
+
+/**
+ * Get the draggable views weight sort of a view if there is one and return its
+ * ID. If there are multiple of these sorts the first is returned.
+ *
+ * @param $view
+ *   The view object.
+ *
+ * @return
+ *   The ID of the sort or FALSE if there isn't one.
+ */
+function draggable_views_get_draggable_sort($view) {
+  foreach ($view->sort as $id => $sort) {
+    if ($sort->definition['handler'] == 'draggableviews_handler_sort') {
+      return $id;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Evalutes the given PHP code, with the given variables defined.
+ *
+ * @param $code
+ *   The PHP code to run, without <?php ?>
+ * @param $arguments
+ *   Views arguments including values of exposed filters.
+ *
+ * @return
+ *   The return value of the evaled code.
+ */
+function draggableviews_eval_return($code, $arguments) {
+  return eval($code);
+}
