@@ -18,6 +18,15 @@
   background: url(images/google-plus.png);
 }
 
+#navigation {
+  height: 86px;
+  margin-top: 27px;
+}
+
+#navigation ul.menu li a {
+  font-size: 22px;
+}
+
 #footer {
   min-height: 0px;
 }
@@ -34,6 +43,10 @@ ul.pager {
 /* Home page. */
 #home-blocks-area .region .block h2 {
   background: none;
+}
+
+.home-block-area .block-views > div.content, #block-twitter-block-default > div.content {
+  min-height: 350px;
 }
 
 #twitter_block_results .twitter_block_user img {
