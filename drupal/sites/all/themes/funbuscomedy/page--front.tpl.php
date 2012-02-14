@@ -147,15 +147,17 @@
 
 <!--footer-bottom-->
 <div id="footer-bottom">
+    <!--
     <div id="footer-bottom-inside" class="clearfix">
     	<div id="footer-bottom-inside-left">
     		<?php print render($page['footer']);?>
     	</div>
     	<div id="footer-bottom-inside-right">
-		<?php print theme('links__system_secondary_menu', array('links' => $secondary_menu, 'attributes' => array('id' => 'secondary-menu', 'class' => array('links', 'inline', 'clearfix')))); ?>
     	</div>
     </div>
+    -->
     <div class="credits-container clearfix">
+            <p><?php print theme('links__system_secondary_menu', array('links' => $secondary_menu, 'attributes' => array('id' => 'secondary-menu', 'class' => array('links', 'inline', 'clearfix')))); ?></p>
 	    <p>&copy; Funbus Comedy 2012</p>
     </div>
 </div>

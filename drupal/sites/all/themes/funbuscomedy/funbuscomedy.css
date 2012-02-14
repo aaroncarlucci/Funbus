@@ -31,6 +31,12 @@
   min-height: 0px;
 }
 
+ul#secondary-menu li {
+  text-align: center;
+  padding-bottom: 5px;
+  width: 100%;
+}
+
 ul.pager {
   background: none;
   border: none;
@@ -109,8 +115,4 @@ ul.pager {
   width: 290px;
   float: left;
   margin-right: 10px;
-}
-
-#blogs .views-field-title {
-
 }
