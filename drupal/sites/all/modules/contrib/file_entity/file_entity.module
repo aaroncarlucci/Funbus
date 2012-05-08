@@ -67,7 +67,7 @@ function file_entity_hook_info_alter(&$info) {
  */
 function file_entity_help($path, $arg) {
   switch ($path) {
-    case 'admin/config/media/file-types':
+    case 'admin/structure/file-types':
       $output = '<p>' . t('When a file is uploaded to this website, it is assigned one of the following types, based on what kind of file it is.') . '</p>';
       return $output;
   }
@@ -85,14 +85,16 @@ function file_entity_access($op) {
  */
 function file_entity_menu() {
   // File Configuration
-  $items['admin/config/media/file-types'] = array(
+  // @todo Move this back to admin/config/media/file-types in Drupal 8 if
+  // MENU_MAX_DEPTH is increased to a value higher than 9.
+  $items['admin/structure/file-types'] = array(
     'title' => 'File types',
     'description' => 'Manage settings for the type of files used on your site.',
     'page callback' => 'file_entity_list_types_page',
     'access arguments' => array('administer site configuration'),
     'file' => 'file_entity.admin.inc',
   );
-  $items['admin/config/media/file-types/manage/%'] = array(
+  $items['admin/structure/file-types/manage/%'] = array(
     'title' => 'Manage file types',
     'description' => 'Manage settings for the type of files used on your site.',
   );
@@ -140,7 +142,7 @@ function file_entity_menu() {
   $items['file/%file/delete'] = array(
     'title' => 'Delete',
     'page callback' => 'drupal_get_form',
-    'page arguments'  => array('file_entity_delete', 1),
+    'page arguments'  => array('file_delete_form', 1),
     'access callback' => 'file_entity_access',
     'access arguments' => array('edit'),
     'weight' => 1,
@@ -291,6 +293,7 @@ function file_entity_theme() {
     ),
     'file_entity_file_link' => array(
       'variables' => array('file' => NULL, 'icon_directory' => NULL),
+      'file' => 'file_entity.theme.inc',
     )
   );
 }
@@ -316,9 +319,9 @@ function file_entity_entity_info_alter(&$entity_info) {
       // Provide a default administration path for Field UI, but not if 'admin'
       // has been explicitly set to NULL.
       'admin' => array(
-        'path' => 'admin/config/media/file-types/manage/%',
-        'real path' => 'admin/config/media/file-types/manage/' . $type,
-        'bundle argument' => 5,
+        'path' => 'admin/structure/file-types/manage/%',
+        'real path' => 'admin/structure/file-types/manage/' . $type,
+        'bundle argument' => 4,
       ),
     );
     $entity_info['file']['bundles'][$type] = array_intersect_key($info, drupal_map_assoc(array('label', 'admin')));
@@ -519,7 +522,7 @@ function file_entity_file_formatter_file_field_settings($form, &$form_state, $se
 function file_entity_file_formatter_file_image_view($file, $display, $langcode) {
   // Prevent PHP notices when trying to read empty files.
   // @see http://drupal.org/node/681042
-  if (!filesize($file->uri)) {
+  if (!$file->filesize) {
     return;
   }
 
@@ -528,24 +531,22 @@ function file_entity_file_formatter_file_image_view($file, $display, $langcode) 
     return;
   }
 
-  $scheme = file_uri_scheme($file->uri);
-  $local_wrappers = file_get_stream_wrappers(STREAM_WRAPPERS_LOCAL);
-  if (isset($local_wrappers[$scheme]) && $image = image_load($file->uri)) {
+  if (file_entity_file_is_local($file) && isset($file->image_dimensions)) {
     if (!empty($display['settings']['image_style'])) {
       $element = array(
         '#theme' => 'image_style',
         '#style_name' => $display['settings']['image_style'],
         '#path' => $file->uri,
-        '#width' => $image->info['width'],
-        '#height' => $image->info['height'],
+        '#width' => $file->image_dimensions['width'],
+        '#height' => $file->image_dimensions['height'],
       );
     }
     else {
       $element = array(
         '#theme' => 'image',
         '#path' => $file->uri,
-        '#width' => $image->info['width'],
-        '#height' => $image->info['height'],
+        '#width' => $file->image_dimensions['width'],
+        '#height' => $file->image_dimensions['height'],
       );
     }
     return $element;
@@ -819,34 +820,50 @@ function file_entity_get_hidden_stream_wrappers() {
 }
 
 /**
- * A copy of theme_file_file_link() that makes the link point to file/[fid].
+ * Clear the field cache for any entities referencing a specific file.
  *
- * @see theme_file_file_link()
- * @return type
+ * @param object $file
+ *   A file object.
  */
-function theme_file_entity_file_link($variables) {
-  $file = $variables['file'];
-  $icon_directory = $variables['icon_directory'];
+function file_entity_invalidate_field_caches($file) {
+  $entity_types = &drupal_static(__FUNCTION__);
 
-  $url = 'file/' . $file->fid;
-  $icon = theme('file_icon', array('file' => $file, 'icon_directory' => $icon_directory));
-
-  // Set options as per anchor format described at
-  // http://microformats.org/wiki/file-format-examples
-  $options = array(
-    'attributes' => array(
-      'type' => $file->filemime . '; length=' . $file->filesize,
-    ),
-  );
-
-  // Use the description as the link text if available.
-  if (empty($file->description)) {
-    $link_text = $file->filename;
-  }
-  else {
-    $link_text = $file->description;
-    $options['attributes']['title'] = check_plain($file->filename);
+  // Gather the list of entity types which support field caching.
+  if (!isset($entity_types)) {
+    $entity_types = array();
+    foreach (entity_get_info() as $entity_type => $entity_info) {
+      if (!empty($entity_info['fieldable']) && !empty($entity_info['field cache'])) {
+        $entity_types[] = $entity_type;
+      }
+    }
   }
 
-  return '<span class="file">' . $icon . ' ' . l($link_text, $url, $options) . '</span>';
+  // If no entity types support field caching, then there is no work to be done.
+  if (empty($entity_types)) {
+    return;
+  }
+
+  $records = db_query("SELECT DISTINCT type, id FROM {file_usage} WHERE fid = :fid AND type IN (:types) AND id > 0", array(':fid' => $file->fid, ':types' => $entity_types))->fetchAll();
+  if (!empty($records)) {
+    $cids = array();
+    foreach ($records as $record) {
+      $cids[] = 'field:' . $record->type . ':' . $record->id;
+    }
+    cache_clear_all($cids, 'cache_field');
+  }
+}
+
+/**
+ * Check if a file entity is considered local or not.
+ *
+ * @param object $file
+ *   A file entity object from file_load().
+ *
+ * @return
+ *   TRUE if the file is using a local stream wrapper, or FALSE otherwise.
+ */
+function file_entity_file_is_local($file) {
+  $scheme = file_uri_scheme($file->uri);
+  $wrappers = file_get_stream_wrappers(STREAM_WRAPPERS_LOCAL);
+  return !empty($wrappers[$scheme]) && empty($wrappers[$scheme]['remote']);
 }
