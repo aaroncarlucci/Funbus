@@ -12,7 +12,8 @@ class MediaInternetYouTubeHandler extends MediaInternetBaseHandler {
       '@youtube\.com/embed/([^"\&\? ]+)@i',
       '@youtube\.com/v/([^"\&\? ]+)@i',
       '@youtube\.com/\?v=([^"\& ]+)@i',
-      '@youtu.be/([^"\&\? ]+)@i',
+      '@youtu\.be/([^"\&\? ]+)@i',
+      '@gdata\.youtube\.com/feeds/api/videos/([^"\&\? ]+)@i',
     );
     foreach ($patterns as $pattern) {
       preg_match($pattern, $embedCode, $matches);
@@ -23,10 +24,8 @@ class MediaInternetYouTubeHandler extends MediaInternetBaseHandler {
   }
 
   public function valid_id($id) {
-    $url = 'http://gdata.youtube.com/feeds/api/videos/'. $id;
-    $response = drupal_http_request($url, array('method' => 'HEAD'));
-    if ($response->code != 200) {
-      throw new MediaInternetValidationException(t('The YouTube video ID is invalid or the video was deleted.'));
+    if (!media_youtube_valid_id($id)) {
+      throw new MediaInternetValidationException(t('The YouTube video ID (@id) is invalid or the video was deleted.', array('@id' => $id)));
     }
     return TRUE;
   }

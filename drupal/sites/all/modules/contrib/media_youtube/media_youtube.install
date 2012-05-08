@@ -107,3 +107,9 @@ function media_youtube_update_7012() {
   return array();
 }
 
+/**
+ * Add new browser for media.
+ */
+function media_youtube_update_7200() {
+  return array();
+}

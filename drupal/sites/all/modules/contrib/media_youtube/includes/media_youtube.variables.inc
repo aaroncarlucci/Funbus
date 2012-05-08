@@ -15,6 +15,11 @@
 define('MEDIA_YOUTUBE_NAMESPACE', 'media_youtube__');
 
 /**
+ * This is the rest point for the YouTube api.
+ */
+define('MEDIA_YOUTUBE_REST_API', 'https://gdata.youtube.com/feeds/api/videos');
+
+/**
  * Wrapper for variable_get() using the Media: YouTube variable registry.
  *
  * @param string $name
