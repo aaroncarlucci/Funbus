@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Native handler sort.
+ */
+
+/**
  * Sort handler for ordering by weight.
  */
 class draggableviews_handler_sort extends views_handler_sort {
@@ -14,7 +19,7 @@ class draggableviews_handler_sort extends views_handler_sort {
       $as = $this->query->add_field($this->table_alias, $this->real_field, $as, array());
       $this->query->orderby[] = array(
         'field' => 'COALESCE(' . $as . ', 10000)',
-        'direction' => strtoupper($this->options['order'])
+        'direction' => drupal_strtoupper($this->options['order'])
       );
     }
     else {
@@ -45,8 +50,8 @@ class draggableviews_handler_sort extends views_handler_sort {
 
   function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
-    $form['order']['#access'] = FALSE;
     $form['expose_button']['#access'] = FALSE;
+    $form['order']['#description'] = t('Please remember to override settings of the sort criterion if you have display that sets weights and you choose descendling order.');
 
     // Check whether current views display doesn't have draggableviews field.
     // If it has, it means that this is setting view so we should set
@@ -81,9 +86,10 @@ class draggableviews_handler_sort extends views_handler_sort {
 
     // If it is setting view.
     if (!is_array($options)) {
+      $form['order']['#access'] = FALSE;
       $form['draggableviews_setting_view'] = array(
         '#type' => 'value',
-        '#value' => $options,
+        '#value' => $this->options['draggableviews_setting_view'],
       );
     }
     else {
