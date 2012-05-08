@@ -277,35 +277,58 @@ function metatag_metatags_load($type, $id) {
 }
 
 function metatag_metatags_load_multiple($type, array $ids) {
-  if (empty($ids) || !db_table_exists('metatag')) {
+  // Double check entity IDs are numeric thanks to Entity API module.
+  $ids = array_filter($ids, 'is_numeric');
+  if (empty($ids)) {
     return array();
   }
-  else {
-    $metatags = db_query("SELECT entity_id, data FROM {metatag} WHERE entity_type = :type AND entity_id IN (:ids)", array(
-      ':type' => $type,
-      ':ids' => $ids,
-    ))->fetchAllKeyed();
-    $metatags = array_map('unserialize', $metatags);
-    return $metatags;
+
+  // Also need to check if the metatag table exists since this condition could
+  // fire before the table has been installed yet.
+  if (!db_table_exists('metatag')) {
+    return array();
   }
+
+  $metatags = db_query("SELECT entity_id, data FROM {metatag} WHERE entity_type = :type AND entity_id IN (:ids)", array(
+    ':type' => $type,
+    ':ids' => $ids,
+  ))->fetchAllKeyed();
+  $metatags = array_map('unserialize', $metatags);
+  return $metatags;
 }
 
 function metatag_metatags_save($type, $id, $metatags) {
+  // Check that $id is numeric because of Entity API and string IDs.
+  if (!is_numeric($id)) {
+    return;
+  }
+
   // Allow other modules to alter the metatags prior to saving.
   foreach (module_implements('metatag_presave') as $module) {
     $function = "{$module}_metatag_presave";
     $function($metatags, $type, $id);
   }
 
-  db_merge('metatag')
-    ->key(array(
-      'entity_type' => $type,
-      'entity_id' => $id,
-    ))
-    ->fields(array(
-      'data' => serialize($metatags),
-    ))
-    ->execute();
+  if (empty($metatags)) {
+    // If the data array is empty, there is no data to actually save, so
+    // just delete the record from the database.
+    db_delete('metatag')
+      ->condition('entity_type', $type)
+      ->condition('entity_id', $id)
+      ->execute();
+  }
+  else {
+    // Otherwise save the data for this entity.
+    db_merge('metatag')
+      ->key(array(
+        'entity_type' => $type,
+        'entity_id' => $id,
+      ))
+      ->fields(array(
+        'data' => serialize($metatags),
+      ))
+      ->execute();
+  }
 
   // Clear cached data.
   metatag_metatags_cache_clear($type, $id);
@@ -316,9 +339,11 @@ function metatag_metatags_delete($type, $id) {
 }
 
 function metatag_metatags_delete_multiple($type, array $ids) {
-  $transaction = db_transaction();
+  // Double check entity IDs are numeric thanks to Entity API module.
+  $ids = array_filter(array_keys($ids, 'is_numeric'));
 
   if ($metatags = metatag_metatags_load_multiple($type, $ids)) {
+    $transaction = db_transaction();
     try {
       // Let other modules know about the metatags being deleted.
       module_invoke_all('metatag_metatags_delete', $type, $ids);
@@ -336,7 +361,6 @@ function metatag_metatags_delete_multiple($type, array $ids) {
       watchdog_exception('metatag', $e);
       throw $e;
     }
-
   }
 }
 
@@ -376,9 +400,14 @@ function metatag_entity_insert($entity, $entity_type) {
  * Implements hook_entity_update().
  */
 function metatag_entity_update($entity, $entity_type) {
+  list($id) = entity_extract_ids($entity_type, $entity);
+
   if (isset($entity->metatags)) {
-    list($id) = entity_extract_ids($entity_type, $entity);
     metatag_metatags_save($entity_type, $id, $entity->metatags);
+  }
+  else {
+    // Still ensure the meta tag output is cached.
+    metatag_metatags_cache_clear($entity_type, $id);
   }
 }
 
@@ -405,8 +434,13 @@ function metatag_field_attach_view_alter(&$output, $context) {
   $entity = $context['entity'];
   list($entity_id, $revision_id, $bundle) = entity_extract_ids($entity_type, $entity);
 
-  if (metatag_entity_supports_metatags($entity_type, $bundle) && $context['view_mode'] == 'full' && _metatag_entity_is_page($entity_type, $context['entity'])) {
-    $cid = "output:{$entity_type}:{$entity_id}";
+  if (metatag_entity_supports_metatags($entity_type, $bundle) && $context['view_mode'] == 'full' && _metatag_entity_is_page($entity_type, $entity)) {
+    $cid_parts = array(
+      //'view_mode' => $context['view_mode'],
+      'langcode' => $context['language'],
+      'url' => $GLOBALS['base_url'] . '/' . current_path(),
+    );
+    $cid = "output:{$entity_type}:{$entity_id}:" . hash('sha256', serialize($cid_parts));
 
     if ($cache = cache_get($cid, 'cache_metatag')) {
       $output['metatags'] = $cache->data;
@@ -538,7 +572,7 @@ function metatag_metatags_form(array &$form, $instance, array $metatags = array(
   foreach (element_children($form) as $key) {
     if (isset($form[$key]['#type']) && $form[$key]['#type'] == 'vertical_tabs') {
       $form['metatags']['#group'] = $key;
-      $form['metatags']['#attached']['js'][] = drupal_get_path('module', 'metatag') . '/metatag.vertical-tabs.js';
+      $form['metatags']['#attached']['js']['vertical-tabs'] = drupal_get_path('module', 'metatag') . '/metatag.vertical-tabs.js';
       break;
     }
   }
@@ -885,7 +919,7 @@ function metatag_get_instance($metatag, array $data = array()) {
     return new $class($info, $data);
   }
   else {
-    trigger_error("Failed to load class $class for metatag $metatag.", E_USER_ERROR);
+    trigger_error("Failed to load class {$info['class']} for metatag $metatag.", E_USER_ERROR);
   }
 }
 
