@@ -34,6 +34,17 @@ function draggableviews_form_alter(&$form, &$form_state, $form_id) {
     }
     // Set action as current path.
     $form['#action'] = base_path() . current_path();
+    // Keep destination and other GET params.
+    if (count($_GET) > 1) {
+      if (isset($_GET['destination'])) {
+        $form['#action'] .= '?destination=' . $_GET['destination'];
+      }
+      else {
+        $get = $_GET;
+        unset($get['q']);
+        $form['#action'] .= '?destination=' . urlencode(current_path() . '?' . http_build_query($get));
+      }
+    }
   }
 }
 
@@ -161,12 +172,22 @@ function draggableviews_contextual_links_view_alter(&$element, $items) {
   if (module_exists('views_ui') && views_ui_contextual_links_suppress()) {
     return;
   }
+
   // Add Draggableviews contextual link "Order view".
-  if (  isset($element['#element']['#views_contextual_links_info']['views_ui']['view_display_id'])
-    && !empty($element['#element']['#views_contextual_links_info']['views_ui']['view_display_id'])
-    && isset($element['#element']['#views_contextual_links_info']['views_ui']['view'])) {
-    $display_id = $element['#element']['#views_contextual_links_info']['views_ui']['view_display_id'];
-    $view = $element['#element']['#views_contextual_links_info']['views_ui']['view'];
+  $views_ui_element = array();
+  if (isset($element['#element']['#views_contextual_links_info']['views_ui'])) {
+    $views_ui_element = $element['#element']['#views_contextual_links_info']['views_ui'];
+  }
+  // In case of block #views_contextual_links_info element is inside of
+  // 'content' and not '#element' directly.
+  // @see http://drupal.org/node/1413596#comment-5912688
+  if (empty($views_ui_element) && isset($element['#element']['content']['#views_contextual_links_info']['views_ui'])) {
+    $views_ui_element = $element['#element']['content']['#views_contextual_links_info']['views_ui'];
+  }
+
+  if ( !empty($views_ui_element['view_display_id']) && isset($views_ui_element['view'])) {
+    $display_id = $views_ui_element['view_display_id'];
+    $view = $views_ui_element['view'];
     $view->build($display_id);
 
     // Proceed only if there is draggableviews weight sort criteria available.
@@ -176,7 +197,7 @@ function draggableviews_contextual_links_view_alter(&$element, $items) {
 
     // Proceed only if order view is no self.
     $order_view_display = $view->sort[$sort_key]->options['draggableviews_setting_view'];
-    if (empty($order_view_display) || $order_view_display == 'self') {
+    if (empty($order_view_display) || $order_view_display == 'self' || $order_view_display == $view->name . ':' . $display_id) {
       return;
     }
     list($order_view_name, $order_view_display_id) = explode(':', $order_view_display);

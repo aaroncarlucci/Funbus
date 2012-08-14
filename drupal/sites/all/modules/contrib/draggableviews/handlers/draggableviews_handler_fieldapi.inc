@@ -29,7 +29,12 @@ class draggableviews_handler_fieldapi extends draggableviews_handler {
 
     // Check all the sortings added to a view. Hope there is
     // better way to determine them. Need to research.
-    foreach ($field->view->display_handler->display->display_options['sorts'] as $sort_option) {
+    $sorts = $field->view->display_handler->display->display_options['sorts'];
+    // If no sorts avaialble for current display, use sorts from default display.
+    if (empty($sorts)) {
+      $sorts = $field->view->display['default']->display_options['sorts'];
+    }
+    foreach ($sorts as $sort_option) {
       $field_name = $sort_option['field'];
       // Field should be like "field_name_value".
       if (strpos($field_name, 'field_') === FALSE || strpos($field_name, '_value') === FALSE) {
@@ -108,9 +113,11 @@ class draggableviews_handler_fieldapi extends draggableviews_handler {
 
     // Save the values of the field.
     foreach ($fv['draggableviews'] as $item) {
-      $entity_wrapper = entity_metadata_wrapper($entity_type, $item['id']);
-      $entity_wrapper->{$field_name}->set($item['weight']);
-      $entity_wrapper->save();
+      if (isset($item['id']) && isset($item['weight'])) {
+        $entity_wrapper = entity_metadata_wrapper($entity_type, $item['id']);
+        $entity_wrapper->{$field_name}->set($item['weight']);
+        $entity_wrapper->save();
+      }
     }
   }
 }
